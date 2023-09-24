@@ -33,7 +33,7 @@ class RBN_Net:
         x = tf.keras.layers.Input(shape=(self.n_in))
         l1 = RBF_layer1(self.n_neu, self.c)
         temp = l1(x)
-        y = tf.keras.layers.Dense(self.n_out, kernel_initializer='LecunNormal', use_bias = False)(temp)
+        y = tf.keras.layers.Dense(self.n_out, kernel_initializer='lecun_normal', use_bias = False)(temp) # Bug fix 
     
         ### Combine the input, hidden, and output layers to build up a RBN
         rbn = tf.keras.models.Model(inputs=x, outputs=y)
@@ -44,7 +44,7 @@ class RBN_Net:
         b = np.ones((1,self.n_neu))*self.b
         a = rbn.get_weights()[1]
         weights = [b, a]
-        rbn.set_weights(weights)
+        # rbn.set_weights(weights) # TODO why set weights?
         
         return rbn
         
@@ -69,15 +69,24 @@ class RBF_layer1(tf.keras.layers.Layer):
     
     def build(self, input_shape):
         b_init = tf.random_normal_initializer()
+        w_init = tf.random_normal_initializer()
+
+        self.w = tf.Variable(
+            initial_value=w_init(shape=(input_shape[-1], self.n_neu),
+                                 dtype='float32'),
+            trainable=True) # weight
+        
         self.b = tf.Variable(
             initial_value=b_init(shape=(input_shape[-1], self.n_neu),
                                  dtype='float32'),
-            trainable=True)
+            trainable=True) # bias
         
     def call(self, inputs):  # Defines the computation from inputs to outputs
-        s = self.b*self.b
-        temp_x = tf.matmul(inputs, tf.ones((1,self.n_neu)))
-        x0 = tf.reshape(np.array(range(self.n_neu)).astype(dtype='float32'),(1,self.n_neu))*(self.c[1]-self.c[0])/(self.n_neu-1)+self.c[0]
-        x_new = (temp_x-x0)*(temp_x-x0)
-        return tf.exp(-x_new * s)
-    
+        # s = self.b*self.b
+        # temp_x = tf.matmul(inputs, tf.ones((1,self.n_neu)))
+        # x0 = tf.reshape(np.array(range(self.n_neu)).astype(dtype='float32'),(1,self.n_neu))*(self.c[1]-self.c[0])/(self.n_neu-1)+self.c[0]
+        # x_new = (temp_x-x0)*(temp_x-x0)
+        # return tf.exp(-x_new * s)
+
+        outputs = tf.add(tf.matmul(inputs, self.w), self.b) # paddle.linear
+        return tf.tanh(outputs)

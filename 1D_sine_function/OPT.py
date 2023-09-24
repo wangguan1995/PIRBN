@@ -34,7 +34,8 @@ class Adam:
             tmp = self.pirbn(x)
             l1 = 0.5 * tf.reduce_mean(tf.square(tmp[0]-y[0]))
             l2 = 0.5 * tf.reduce_mean(tf.square(tmp[1]))
-            loss = l1 * a_g + l2 * a_b
+            # loss = l1 * a_g + l2 * a_b # TODO why this weight?
+            loss = l1 + l2
         grads = g.gradient(loss, self.pirbn.trainable_variables)
         return loss, grads, l1, l2
 
@@ -45,10 +46,10 @@ class Adam:
         loss, grads, l1, l2 = self.Loss(self.x_train, self.y_train, self.a_g, self.a_b)
         self.his_l1.append(l1.numpy())
         self.his_l2.append(l2.numpy())
-        if self.iter % 200 == 0:
-            self.a_g, self.a_b, jac = cal_adapt(self.pirbn, self.x_train)
-            print('\ta_g =', self.a_g,'\ta_b =', self.a_b)
-            print('Iter: ',self.iter,'\tL1 =',l1.numpy(),'\tL2 =',l2.numpy())
+        # if self.iter % 200 == 0:
+        #     self.a_g, self.a_b, jac = cal_adapt(self.pirbn, self.x_train)
+        #     print('\ta_g =', self.a_g,'\ta_b =', self.a_b)
+        #     print('Iter: ',self.iter,'\tL1 =',l1.numpy(),'\tL2 =',l2.numpy())
         self.iter = self.iter+1
         # convert tf.Tensor to flatten ndarray
         loss = loss.numpy().astype('float64')
